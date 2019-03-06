@@ -15,6 +15,8 @@ And then, using `python mxnet2caffe.py` to generate the corresponding `.caffemod
 
 ## Update
 Now, it support to skip the `Flatten` layer automatically, and fix the bug of converting `BatchNorm` layer by judging `fix_gamma`.
+Have tested on the face recognition model and gender-age model from insightface: https://github.com/deepinsight/insightface/wiki/Model-Zoo.
+
 
 ## TODO
 
