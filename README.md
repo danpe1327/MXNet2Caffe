@@ -13,10 +13,12 @@ After that, simply run `python json2prototxt.py` to generate the corresponding `
 
 And then, using `python mxnet2caffe.py` to generate the corresponding `.caffemodel`.
 
+## Update
+Now, it support to skip the `Flatten` layer automatically, and fix the bug of converting `BatchNorm` layer by judging `fix_gamma`.
 
 ## TODO
 
-[1] Since their is not `Flaten` layer in caffe, you have to manually moidify the automatically generated `.prototxt`. In other words, you have to change the `bottom` of the layer just after the `Falatten` layer making it linking to the layer before the `Falatten` layer. Currently, this part has to be done manually.
+~~[1] Since their is not `Flaten` layer in caffe, you have to manually moidify the automatically generated `.prototxt`. In other words, you have to change the `bottom` of the layer just after the `Falatten` layer making it linking to the layer before the `Falatten` layer. Currently, this part has to be done manually.~~
 
 [2] The converted model performances a little bit worse than the original MXNet model.
 
