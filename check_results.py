@@ -1,3 +1,4 @@
+import os
 import argparse
 
 from predictor_caffe import PredictorCaffe
@@ -28,11 +29,13 @@ def compare_models(prefix_mxnet, prefix_caffe, size, layer_name):
 
     tensor = np.ones(size, dtype=np.float32)
     out_mx = netmx.forward(tensor)
+    print('out_mx')
     print(out_mx)
 
-    tensor = (tensor - 127.5) * 0.0078125  # for most mxnet model, it is a default normalization
+    # tensor = (tensor - 127.5) * 0.0078125  # for most mxnet model, it is a default normalization
     netcaffe.forward(tensor)
     out_caffe = netcaffe.blob_by_name(layer_name)
+    print('out_caffe')
     print(out_caffe.data)
 
     print('done')
@@ -43,7 +46,7 @@ def parse_args():
     parser.add_argument('--prefix_mxnet', type=str, default='model_mxnet/facega')
     parser.add_argument('--prefix_caffe', type=str, default='model_caffe/facega')
     parser.add_argument('--size', nargs='+', type=int, help='the input size of model with batch size 1',
-                        default=[1, 3, 112, 112])
+                        default=[1, 3, 640, 640])
     parser.add_argument('--layer', type=str, default='fc1')
 
     args = parser.parse_args()

@@ -4,8 +4,8 @@ import pprint
 
 attrstr = "attrs"
 
-
 # attrstr = "param"
+
 
 def data(txt_file, info):
     txt_file.write('name: "mxnet-mdoel"\n')
@@ -14,7 +14,7 @@ def data(txt_file, info):
     txt_file.write('  type: "Input"\n')
     txt_file.write('  top: "data"\n')
     txt_file.write('  input_param {\n')
-    txt_file.write('    shape: { dim: 1 dim: 3 dim: 112 dim: 112 }\n')  # TODO
+    txt_file.write('    shape: { dim: 1 dim: 3 dim: %s dim: %s }\n'%(info['data_size'],info['data_size']))  # TODO
     txt_file.write('  }\n')
     txt_file.write('}\n')
     txt_file.write('\n')
@@ -96,7 +96,6 @@ def BatchNorm(txt_file, info):
     txt_file.write('  scale_param { bias_term: true }\n')
     txt_file.write('}\n')
     txt_file.write('\n')
-    pass
 
 
 def Activation(txt_file, info):
@@ -122,7 +121,6 @@ def Concat(txt_file, info):
     txt_file.write('  top: "%s"\n' % info['top'])
     txt_file.write('}\n')
     txt_file.write('\n')
-    pass
 
 
 def ElementWiseSum(txt_file, info):
@@ -135,7 +133,6 @@ def ElementWiseSum(txt_file, info):
     txt_file.write('  eltwise_param { operation: SUM }\n')
     txt_file.write('}\n')
     txt_file.write('\n')
-    pass
 
 
 def Pooling(txt_file, info):
@@ -157,7 +154,6 @@ def Pooling(txt_file, info):
     txt_file.write('  }\n')
     txt_file.write('}\n')
     txt_file.write('\n')
-    pass
 
 
 def FullyConnected(txt_file, info):
@@ -171,7 +167,6 @@ def FullyConnected(txt_file, info):
     txt_file.write('  }\n')
     txt_file.write('}\n')
     txt_file.write('\n')
-    pass
 
 
 def Flatten(txt_file, info):
@@ -179,7 +174,13 @@ def Flatten(txt_file, info):
 
 
 def SoftmaxOutput(txt_file, info):
-    pass
+    txt_file.write('layer {\n')
+    txt_file.write('  name: "%s"\n' % info['top'])
+    txt_file.write('  type: "Softmax"\n')
+    txt_file.write('  bottom: "%s"\n' % info['bottom'][0])
+    txt_file.write('  top: "%s"\n' % info['top'])
+    txt_file.write('}\n')
+    txt_file.write('\n')
 
 
 def LeakyReLU(txt_file, info):
@@ -226,7 +227,93 @@ def Dropout(txt_file, info):
     txt_file.write('}\n')
     txt_file.write('\n')
 
-# ----------------------------------------------------------------
+
+def Reshape(txt_file, info):
+    txt_file.write('layer {\n')
+    txt_file.write('  bottom: "%s"\n' % info['bottom'][0])
+    txt_file.write('  top: "%s"\n' % info['top'])
+    txt_file.write('  name: "%s"\n' % info['top'])
+    txt_file.write('  type: "Reshape"\n')
+    txt_file.write('  reshape_param {\n    shape {\n')
+
+    reshape_params = eval(info[attrstr]['shape'])
+    for item in reshape_params:
+        txt_file.write('      dim:%s\n' % item)
+    txt_file.write('     }\n')
+    txt_file.write('   }\n')
+    txt_file.write('}\n')
+    txt_file.write('\n')
+
+
+def Unsample(txt_file, info):   
+    if fuzzy_haskey(info['params'], 'bias'):
+        bias_term = 'true'
+    elif info[attrstr].has_key('no_bias') and info['attrs']['no_bias'] == 'True':
+        bias_term = 'false'
+    else:
+        bias_term = 'true'
+
+    stride = 2
+    pad = 1
+    num_output = info[attrstr]['num_filter']
+    num_group = num_output
+    fillier_type = 'bilinear'
+    dilation = 1 
+    if info['op'] == 'Deconvolution':
+        kernel_size = info[attrstr]['kernel'].split('(')[1].split(',')[0]
+
+        if info[attrstr].has_key('pad'):
+            pad = info[attrstr]['pad'].split('(')[1].split(',')[0]
+        if info[attrstr].has_key('num_group'):
+            num_group = info[attrstr]['num_group']
+        if info[attrstr].has_key('stride'):
+            stride = info[attrstr]['stride'].split('(')[1].split(',')[0]
+    elif info['op'] == 'UpSampling':
+        kernel_size = 2
+        pad = 0
+        fillier_type = 'constant'        
+        if info[attrstr].has_key('scale'):
+            stride = info[attrstr]['scale']
+
+    txt_file.write('layer {\n')
+    txt_file.write('  name: "%s"\n' % info['top'])
+    txt_file.write('  type: "Deconvolution"\n')
+    txt_file.write('  bottom: "%s"\n' % info['bottom'][0])
+    txt_file.write('  top: "%s"\n' % info['top'])
+    txt_file.write('  convolution_param {\n')
+    txt_file.write('		kernel_size: %s\n' % kernel_size)
+    txt_file.write('		stride: %s\n' % stride)
+    txt_file.write('		pad: %s\n' % pad)
+    txt_file.write('		num_output: %s\n' % num_output)
+    txt_file.write('		group: %s\n' % num_group)
+    txt_file.write('		bias_term: %s\n' % bias_term)
+    txt_file.write('		dilation: %s\n' % dilation)
+    if fillier_type == 'bilinear':
+        txt_file.write('		weight_filler {\n           type: "%s"\n    }\n' % fillier_type)
+    else:
+        txt_file.write('		weight_filler {\n           type: "%s"\n           value: 1\n        }\n' % fillier_type)
+    txt_file.write('  }\n')
+    txt_file.write('  param { lr_mult: 0 decay_mult: 0 }\n')
+    txt_file.write('}\n')
+    txt_file.write('\n')
+
+
+def Crop(txt_file, info):
+    txt_file.write('layer {\n')
+    txt_file.write('  bottom: "%s"\n' % info['bottom'][0])
+    txt_file.write('  bottom: "%s"\n' % info['bottom'][1])
+    txt_file.write('  top: "%s"\n' % info['top'])
+    txt_file.write('  name: "%s"\n' % info['top'])
+    txt_file.write('  type: "Crop"\n')
+    txt_file.write('  crop_param {\n')
+    txt_file.write('		axis: 2\n')
+    txt_file.write('		offset: 0\n')
+    txt_file.write('		offset: 0\n')
+    txt_file.write('   }\n')
+    txt_file.write('}\n')
+    txt_file.write('\n')
+
+
 def write_node(txt_file, info):
     if 'label' in info['name']:
         return
@@ -260,6 +347,14 @@ def write_node(txt_file, info):
         ElementWiseSum(txt_file, info)
     elif info['op'] == 'Dropout':
         Dropout(txt_file, info)
+    elif info['op'] == 'Reshape':
+        Reshape(txt_file, info)
+    elif info['op'] in ['SoftmaxOutput', 'SoftmaxActivation']:
+        SoftmaxOutput(txt_file, info)
+    elif info['op'] in ['UpSampling', 'Deconvolution']:
+        Unsample(txt_file, info)
+    elif info['op'] == 'Crop':
+        Crop(txt_file, info)
     else:
         # pprint.pprint(info)
         # sys.exit("Warning!  Unknown mxnet op:{}".format(info['op']))

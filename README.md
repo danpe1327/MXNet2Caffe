@@ -14,7 +14,8 @@ After that, simply run `python json2prototxt.py` to generate the corresponding `
 And then, using `python mxnet2caffe.py` to generate the corresponding `.caffemodel`.
 
 ## Update
-Now, it supports to skip the `Flatten` layer automatically, and fix the bug of converting `BatchNorm` layer by judging `fix_gamma`.
+201911 Add support for retinaface from insightface, add `UpSampling`, `Deconvolution` layer converting method.
+201904 It supports to skip the `Flatten` layer automatically, and fix the bug of converting `BatchNorm` layer by judging `fix_gamma`.
 Have tested on the face recognition model and gender-age model from insightface: https://github.com/deepinsight/insightface/wiki/Model-Zoo.
 
 
